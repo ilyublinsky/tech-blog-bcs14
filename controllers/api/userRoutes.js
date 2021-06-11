@@ -1,5 +1,30 @@
 const router = require('express').Router();
-const { User } = require('../../models');
+const { User, Post } = require('../../models');
+const withAuth = require('../../utils/auth');
+
+router.get('/', async (req, res) => {
+  try {
+    const userData = await User.findAll();
+    res.status(200).json(userData);
+  } catch (error) {
+    res.status(400).json(error);
+  }
+});
+
+router.get('/:id', async (req, res) => {
+  try {
+    const userData = await User.findByPk(req.params.id, {
+      include: [{ model: Post }],
+    });
+    if (!userData) {
+      res.status(404).json({ message: 'Id is not recognized.' });
+      return;
+    }
+    res.status(200).json(userData);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
 
 router.post('/', async (req, res) => {
   try {
@@ -39,10 +64,9 @@ router.post('/login', async (req, res) => {
     req.session.save(() => {
       req.session.user_id = userData.id;
       req.session.logged_in = true;
-      
+
       res.json({ user: userData, message: 'You are now logged in!' });
     });
-
   } catch (err) {
     res.status(400).json(err);
   }
